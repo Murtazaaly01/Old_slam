@@ -93,7 +93,7 @@ def rss_load():
         rss_dict[row[0]] = (row[1], row[2], row[3])
 
 def cmd_rsshelp(update, context):
-    help_string=f"""
+    help_string = """
 <b>Commands:</b> 
 • /rsshelp: <i>To get this message</i>
 • /feeds: <i>List your subscriptions</i>
@@ -102,30 +102,35 @@ def cmd_rsshelp(update, context):
 • /unsub Title: <i>Removes the RSS subscription corresponding to it's title</i>
 • /unsuball: <i>Removes all subscriptions</i>
 """
+
     update.effective_message.reply_text(help_string, parse_mode='HTMl')
 
 def cmd_rss_list(update, context):
-    listfeed = ""
-    if bool(rss_dict) is False:
+    if not bool(rss_dict):
         update.effective_message.reply_text("No subscriptions.")
     else:
-        for title, url_list in rss_dict.items():
-            listfeed +=f"Title: {title}\nFeed: {url_list[0]}\n\n"
-        update.effective_message.reply_text(f"<b>Your subscriptions:</b>\n\n" + listfeed, parse_mode='HTMl')
+        listfeed = "".join(
+            f"Title: {title}\nFeed: {url_list[0]}\n\n"
+            for title, url_list in rss_dict.items()
+        )
+
+        update.effective_message.reply_text(
+            f"<b>Your subscriptions:</b>\n\n{listfeed}", parse_mode='HTMl'
+        )
 
 def cmd_get(update, context):
     try:
         count = context.args[1]
         q = (context.args[0],)
         feedurl = postgres_find(q)
-        if  feedurl != None:
+        if feedurl != None:
             feedinfo = ""
             try:
                 if int(context.args[1]) > 0:
                     feed_num = int(context.args[1])
                 else:
-                    raise Exception  
-            except (ValueError, Exception):
+                    raise Exception
+            except Exception:
                 update.effective_message.reply_text("Enter a value > 0.")
                 LOGGER.error("You trolling? Study Math doofus.")
             else:
@@ -133,7 +138,7 @@ def cmd_get(update, context):
                 for num_feeds in range(feed_num):
                     rss_d = feedparser.parse(feedurl[0])
                     feedinfo +=f"<b>{rss_d.entries[num_feeds]['title']}</b>\n{rss_d.entries[num_feeds]['link']}\n\n"
-                msg.edit_text(feedinfo, parse_mode='HTMl')    
+                msg.edit_text(feedinfo, parse_mode='HTMl')
         else:
             update.effective_message.reply_text("No such feed found.")
     except IndexError:
@@ -175,29 +180,29 @@ def cmd_rss_unsuball(update, context):
         update.effective_message.reply_text("No subscriptions.")
 
 def init_feeds():
-    if INIT_FEEDS == "True":
-        for name, url_list in rss_dict.items():
-            try:
-                rss_d = feedparser.parse(url_list[0])
-                postgres_update(str(rss_d.entries[0]['link']), name, str(rss_d.entries[0]['title']))
-                LOGGER.info("Feed name: "+ name)
-                LOGGER.info("Latest feed item: "+ rss_d.entries[0]['link'])
-            except IndexError:
-                LOGGER.info(f"There was an error while parsing this feed: {url_list[0]}")
-                continue                    
-        rss_load()
-        LOGGER.info('Initiated feeds.')
+    if INIT_FEEDS != "True":
+        return
+    for name, url_list in rss_dict.items():
+        try:
+            rss_d = feedparser.parse(url_list[0])
+            postgres_update(str(rss_d.entries[0]['link']), name, str(rss_d.entries[0]['title']))
+            LOGGER.info(f"Feed name: {name}")
+            LOGGER.info("Latest feed item: "+ rss_d.entries[0]['link'])
+        except IndexError:
+            LOGGER.info(f"There was an error while parsing this feed: {url_list[0]}")
+    rss_load()
+    LOGGER.info('Initiated feeds.')
 
 def rss_monitor(context):
     feed_info = ""
     for name, url_list in rss_dict.items():
         try:
-            feed_count = 0
-            feed_titles = []
-            feed_urls = []
             # check whether the URL & title of the latest item is in the database
             rss_d = feedparser.parse(url_list[0])
             if (url_list[1] != rss_d.entries[0]['link'] and url_list[2] != rss_d.entries[0]['title']):
+                feed_count = 0
+                feed_titles = []
+                feed_urls = []
                 # check until a new item pops up
                 while (url_list[1] != rss_d.entries[feed_count]['link'] and url_list[2] != rss_d.entries[feed_count]['title']):
                     feed_titles.insert(0, rss_d.entries[feed_count]['title'])
@@ -212,7 +217,7 @@ def rss_monitor(context):
             LOGGER.info(f"There was an error while parsing this feed: {url_list[0]}")
             continue
         else:
-            LOGGER.info("Feed name: "+ name)
+            LOGGER.info(f"Feed name: {name}")
             LOGGER.info("Latest feed item: "+ rss_d.entries[0]['link'])
     rss_load()
     LOGGER.info('Database Updated.')

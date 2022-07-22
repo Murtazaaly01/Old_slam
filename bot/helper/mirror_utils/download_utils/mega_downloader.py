@@ -80,7 +80,7 @@ class MegaAppListener(MegaListener):
         LOGGER.error(f'Mega Request error in {error}')
         if not self.is_cancelled:
             self.is_cancelled = True
-            self.listener.onDownloadError("RequestTempError: " + error.toString())
+            self.listener.onDownloadError(f"RequestTempError: {error.toString()}")
         self.error = error.toString()
         self.continue_event.set()
 
@@ -171,7 +171,7 @@ class MegaDownloadHelper:
             LOGGER.info('Checking File/Folder if already in Drive')
             mname = node.getName()
             if listener.isTar:
-                mname = mname + ".zip" if listener.isZip else mname + ".tar"
+                mname = f"{mname}.zip" if listener.isZip else f"{mname}.tar"
             if listener.extract:
                 smsg = None
             else:
@@ -190,8 +190,9 @@ class MegaDownloadHelper:
             else:
                 is_tar_ext = False
                 msg3 = f'Failed, Mega limit is {MEGA_LIMIT}.\nYour File/Folder size is {get_readable_file_size(api.getSize(node))}.'
-            result = check_limit(size, MEGA_LIMIT, TAR_UNZIP_LIMIT, is_tar_ext)
-            if result:
+            if result := check_limit(
+                size, MEGA_LIMIT, TAR_UNZIP_LIMIT, is_tar_ext
+            ):
                 sendMessage(msg3, listener.bot, listener.update)
                 executor.continue_event.set()
                 return

@@ -23,7 +23,7 @@ class AriaDownloadHelper:
             LOGGER.info('Checking File/Folder if already in Drive...')
             sname = aria2.get_download(gid).name
             if dl.getListener().isTar:
-                sname = sname + ".zip" if dl.getListener().isZip else sname + ".tar"
+                sname = f"{sname}.zip" if dl.getListener().isZip else f"{sname}.tar"
             if dl.getListener().extract:
                 smsg = None
             else:
@@ -43,8 +43,9 @@ class AriaDownloadHelper:
             else:
                 is_tar_ext = False
                 mssg = f'Torrent/Direct limit is {TORRENT_DIRECT_LIMIT}'
-            result = check_limit(size, TORRENT_DIRECT_LIMIT, TAR_UNZIP_LIMIT, is_tar_ext)
-            if result:
+            if result := check_limit(
+                size, TORRENT_DIRECT_LIMIT, TAR_UNZIP_LIMIT, is_tar_ext
+            ):
                 dl.getListener().onDownloadError(f'{mssg}.\nYour File/Folder size is {get_readable_file_size(size)}')
                 aria2.remove([download], force=True)
                 return
@@ -70,8 +71,7 @@ class AriaDownloadHelper:
     @new_thread
     def __onDownloadStopped(self, api, gid):
         sleep(4)
-        dl = getDownloadByGid(gid)
-        if dl: 
+        if dl := getDownloadByGid(gid):
             dl.getListener().onDownloadError('Dead torrent!')
 
     @new_thread

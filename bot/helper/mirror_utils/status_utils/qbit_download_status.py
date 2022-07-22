@@ -57,7 +57,7 @@ class QbDownloadStatus(Status):
         if download == "queuedDL":
             return MirrorStatus.STATUS_WAITING
         elif download in ["metaDL", "checkingResumeData"]:
-            return MirrorStatus.STATUS_DOWNLOADING + " (Metadata)"
+            return f"{MirrorStatus.STATUS_DOWNLOADING} (Metadata)"
         elif download == "pausedDL":
             return MirrorStatus.STATUS_PAUSE
         else:

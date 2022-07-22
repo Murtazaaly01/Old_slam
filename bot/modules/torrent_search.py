@@ -183,9 +183,7 @@ class TorrentSearch:
         
     @staticmethod
     def format_magnet(string: str):
-        if not string:
-            return ""
-        return string.split('&tr', 1)[0]
+        return string.split('&tr', 1)[0] if string else ""
 
     def get_formatted_string(self, values):
         string = self.RESULT_STR.format(**values)
@@ -196,10 +194,8 @@ class TorrentSearch:
                 tmp_str.format(**f, magnet=self.format_magnet(f['Magnet']))
                 for f in values['Files']
             )
-        else:
-            magnet = values.get('magnet', values.get('Magnet'))  # Avoid updating source dict
-            if magnet:
-                extra += f"➲Magnet: `{self.format_magnet(magnet)}`"
+        elif magnet := values.get('magnet', values.get('Magnet')):
+            extra += f"➲Magnet: `{self.format_magnet(magnet)}`"
         if (extra):
             string += "\n" + extra
         return string
